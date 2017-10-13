@@ -19,6 +19,11 @@ public class HttpClientFactory {
 
     private static final Gson GSON = new GsonBuilder().create();
 
+    public static HttpPipResolverService getHttpPipResolverService(String baseUrl) {
+        return buildRetrofit(baseUrl)
+                .create(HttpPipResolverService.class);
+    }
+
     public static HttpService getHttpService(String baseUrl) {
         return buildRetrofit(baseUrl)
                 .create(HttpService.class);
@@ -29,14 +34,6 @@ public class HttpClientFactory {
                 .baseUrl(baseUrl)
                 .client(client)
                 .addConverterFactory(GsonConverterFactory.create(GSON))
-                .build();
-    }
-
-    private static HttpUrl buildBaseUrl(String scheme, String host, String apiVersion) {
-        return new HttpUrl.Builder()
-                .scheme(scheme)
-                .host(host)
-                .addEncodedPathSegment(apiVersion)
                 .build();
     }
 
