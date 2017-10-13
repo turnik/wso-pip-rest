@@ -1,54 +1,72 @@
 package com.belkacar.wso.pip;
 
 import com.belkacar.wso.pip.network.HttpClientFactory;
+import com.belkacar.wso.pip.network.HttpPipResolverService;
 import com.belkacar.wso.pip.network.HttpService;
 import retrofit2.Call;
-import okhttp3.Response;
 import org.wso2.carbon.identity.entitlement.pip.AbstractPIPAttributeFinder;
-import retrofit2.Callback;
 
 import java.io.IOException;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 public class RestAttributeFinderModule extends AbstractPIPAttributeFinder {
 
     private static final String KEY_ENDPOINT = "Endpoint";
     private static final String MODULE_NAME = "BelkaCar Attribute Finder";
 
-    private HttpService httpService;
+    private HashMap<String, HttpService> attributesMap;
 
-    @Override
-    public Set<String> getAttributeValues(String subjectId, String resourceId, String actionId, String environmentId,
-                                          String attributeId, String issuer) throws Exception {
-        //init request object
-        Call<Set<String>> request = httpService.
-                getAttribute(attributeId, subjectId, resourceId, actionId, environmentId, issuer);
+    private HashMap<String, HttpService> initPipServices(String endpoint)
+    {
+        HttpPipResolverService pipResolverService = HttpClientFactory.getHttpPipResolverService(endpoint);
 
+        Call<Map<String,String>> request = pipResolverService.getPipList();
+        Map<String,String> pipEndpoints = null;
         try {
-            /*
-            try to make request in blocking mode
-            example of usage @see https://futurestud.io/tutorials/retrofit-synchronous-and-asynchronous-requests
-            we use retrofit2
-             */
-            retrofit2.Response<Set<String>> response = request.execute();
-
-            /*
-            here will be result of request converted to Set<String>
-            you can use some methods like
-            response.isSuccessful();
-            response.code();
-            for checking request status
-             */
-
-            return response.body();
-
+            retrofit2.Response<Map<String,String>> response = request.execute();
+            if (response.code() == 200) {
+                pipEndpoints = response.body();
+            }
         } catch (IOException e) {
             e.printStackTrace();
+            throw new RuntimeException("fucking bullshit :)");
         }
 
-        throw new RuntimeException("fucking bullshit :)");
+        HashMap<String, HttpService> httpServices = new HashMap<String, HttpService>();
+        if (pipEndpoints != null) {
+            for (Map.Entry<String, String> entry : pipEndpoints.entrySet())
+            {
+                httpServices.put(entry.getKey(), HttpClientFactory.getHttpService(entry.getValue()));
+            }
+        }
 
+        return httpServices;
+    }
+
+    private void loadAttributes(HashMap<String, HttpService> httpServices)
+    {
+        attributesMap = new HashMap<String, HttpService>();
+        for (HashMap.Entry<String, HttpService> entry : httpServices.entrySet())
+        {
+            Set<String> pipAttributes = null;
+            Call<Set<String>> request = entry.getValue().getAttributesList();
+            try {
+                retrofit2.Response<Set<String>> response = request.execute();
+                if (response.code() == 200) {
+                    pipAttributes = response.body();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new RuntimeException("fucking bullshit :)");
+            }
+
+            if (pipAttributes != null) {
+                for (String pipAttribute : pipAttributes)
+                {
+                    attributesMap.put(pipAttribute, entry.getValue());
+                }
+            }
+        }
     }
 
     @Override
@@ -59,19 +77,53 @@ public class RestAttributeFinderModule extends AbstractPIPAttributeFinder {
             throw new Exception("Endpoint can not be null. Please configure it in the entitlement.properties file.");
         }
 
-        /*
-        add http service to our finder module
-         */
-        httpService = HttpClientFactory.getHttpService(endpoint);
+        HashMap<String, HttpService> httpServices = initPipServices(endpoint);
+        loadAttributes(httpServices);
+    }
+
+    @Override
+    public Set<String> getSupportedAttributes()
+    {
+        if (attributesMap == null) {
+            return Collections.emptySet();
+        }
+        return attributesMap.keySet();
+    }
+
+    @Override
+    public Set<String> getAttributeValues(String subjectId, String resourceId, String actionId,
+                                          String environmentId, String attributeId, String issuer) throws Exception {
+        System.out.println(attributeId);
+        HttpService httpService = attributesMap.get(attributeId);
+        if (httpService == null) {
+            return Collections.emptySet();
+        }
+        //init request object
+        Call<Set<String>> request = httpService.getAttribute(
+                attributeId,
+                subjectId,
+                resourceId,
+                actionId,
+                environmentId,
+                issuer
+        );
+
+        try {
+            retrofit2.Response<Set<String>> response = request.execute();
+            if (response.code() == 200) {
+                return response.body();
+            } else {
+                return Collections.emptySet();
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException("fucking bullshit :)");
+        }
     }
 
     @Override
     public String getModuleName() {
         return MODULE_NAME;
-    }
-
-    @Override
-    public Set<String> getSupportedAttributes() {
-        return null;
     }
 }
