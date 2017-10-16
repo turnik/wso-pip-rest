@@ -1,10 +1,10 @@
 package com.belkacar.wso.pip;
 
+import org.wso2.carbon.identity.entitlement.pip.AbstractPIPAttributeFinder;
 import com.belkacar.wso.pip.network.HttpClientFactory;
 import com.belkacar.wso.pip.network.HttpPipResolverService;
 import com.belkacar.wso.pip.network.HttpService;
 import retrofit2.Call;
-import org.wso2.carbon.identity.entitlement.pip.AbstractPIPAttributeFinder;
 
 import java.io.IOException;
 import java.util.*;
@@ -20,10 +20,10 @@ public class RestAttributeFinderModule extends AbstractPIPAttributeFinder {
     {
         HttpPipResolverService pipResolverService = HttpClientFactory.getHttpPipResolverService(endpoint);
 
-        Call<Map<String,String>> request = pipResolverService.getPipList();
-        Map<String,String> pipEndpoints = null;
+        Call<Set<String>> request = pipResolverService.getPipList();
+        Set<String> pipEndpoints = null;
         try {
-            retrofit2.Response<Map<String,String>> response = request.execute();
+            retrofit2.Response<Set<String>> response = request.execute();
             if (response.code() == 200) {
                 pipEndpoints = response.body();
             }
@@ -34,9 +34,9 @@ public class RestAttributeFinderModule extends AbstractPIPAttributeFinder {
 
         HashMap<String, HttpService> httpServices = new HashMap<String, HttpService>();
         if (pipEndpoints != null) {
-            for (Map.Entry<String, String> entry : pipEndpoints.entrySet())
+            for (String pipEndpoint : pipEndpoints)
             {
-                httpServices.put(entry.getKey(), HttpClientFactory.getHttpService(entry.getValue()));
+                httpServices.put(pipEndpoint, HttpClientFactory.getHttpService(pipEndpoint));
             }
         }
 
@@ -93,11 +93,11 @@ public class RestAttributeFinderModule extends AbstractPIPAttributeFinder {
     @Override
     public Set<String> getAttributeValues(String subjectId, String resourceId, String actionId,
                                           String environmentId, String attributeId, String issuer) throws Exception {
-        System.out.println(attributeId);
         HttpService httpService = attributesMap.get(attributeId);
         if (httpService == null) {
             return Collections.emptySet();
         }
+
         //init request object
         Call<Set<String>> request = httpService.getAttribute(
                 attributeId,
