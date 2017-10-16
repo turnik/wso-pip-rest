@@ -16,7 +16,7 @@ public final class Main {
         /*
         init properties for finder module
          */
-        properties.setProperty("Endpoint", "http://abac-dev.belkacar.ru:8080/pip/1.0/");
+        properties.setProperty("Endpoint", "http://abac-dev.belkacar.ru:8080/api/1.0/");
         System.out.println("Start Application");
 
         /*
@@ -28,11 +28,7 @@ public final class Main {
         System.out.println(attribs.toString());
 
         Set<String> attrib = finderModule.getAttributeValues("sdfsdf", "subject",
-                "res", "action", "ru:belkacar:rent:fare", "issuer");
-        System.out.println(attrib.toString());
-
-        attrib = finderModule.getAttributeValues("sdfsdf", "subject",
-                "res", "action", "sdfsdfsdf", "issuer");
+                "res", "action", "ru:belkacar:verification:working-shift:role", "issuer");
         System.out.println(attrib.toString());
 
         System.out.println("Down Application");
