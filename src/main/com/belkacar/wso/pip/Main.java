@@ -27,8 +27,14 @@ public final class Main {
         Set<String> attribs = finderModule.getSupportedAttributes();
         System.out.println(attribs.toString());
 
-        Set<String> attrib = finderModule.getAttributeValues("sdfsdf", "subject",
-                "res", "action", "ru:belkacar:verification:working-shift:role", "issuer");
+        Set<String> attrib = finderModule.getAttributeValues(
+                "2",
+                "resource",
+                "read",
+                "env",
+                "ru:belkacar:verification:working-shift:role",
+                "issuer"
+        );
         System.out.println(attrib.toString());
 
         System.out.println("Down Application");
