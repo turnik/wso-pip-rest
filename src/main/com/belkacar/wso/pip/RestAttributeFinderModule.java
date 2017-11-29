@@ -85,7 +85,7 @@ public class RestAttributeFinderModule extends AbstractPIPAttributeFinder {
     public Set<String> getSupportedAttributes()
     {
         if (attributesMap == null) {
-            return Collections.emptySet();
+            return new HashSet<String>();
         }
         return attributesMap.keySet();
     }
@@ -95,7 +95,7 @@ public class RestAttributeFinderModule extends AbstractPIPAttributeFinder {
                                           String environmentId, String attributeId, String issuer) throws Exception {
         HttpService httpService = attributesMap.get(attributeId);
         if (httpService == null) {
-            return Collections.emptySet();
+            return new HashSet<String>();
         }
 
         //init request object
@@ -111,9 +111,13 @@ public class RestAttributeFinderModule extends AbstractPIPAttributeFinder {
         try {
             retrofit2.Response<Set<String>> response = request.execute();
             if (response.code() == 200) {
-                return response.body();
+                Set<String> attributeValues = response.body();
+                if (attributeValues.isEmpty()) {
+                    return new HashSet<String>();
+                }
+                return attributeValues;
             } else {
-                return Collections.emptySet();
+                return new HashSet<String>();
             }
 
         } catch (IOException e) {

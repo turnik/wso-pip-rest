@@ -1,47 +1,31 @@
-
-<Policy xmlns="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17"
-        xmlns:xacml="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17" PolicyId="KMarket-Test-Policy"
-        RuleCombiningAlgId="urn:oasis:names:tc:xacml:1.0:rule-combining-algorithm:first-applicable"
-        Version="1.0">
-    <Target>
-        <AnyOf>
-            <AllOf>
-                <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-regexp-match">
-                    <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">foo</AttributeValue>
-                    <AttributeDesignator MustBePresent="false"
-                                         Category="urn:oasis:names:tc:xacml:3.0:attribute-category:resource"
-                                         AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id"
-                                         DataType="http://www.w3.org/2001/XMLSchema#string"/>
-                </Match>
-            </AllOf>
-        </AnyOf>
-    </Target>
-    <Rule RuleId="rule1" Effect="Permit">
+<Policy xmlns="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17"  PolicyId="test_verification" RuleCombiningAlgId="urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:permit-overrides" Version="1.0">
+    <Description>Verification test rule</Description>
+    <Target></Target>
+    <Rule Effect="Permit" RuleId="rule-test-verification">
         <Target>
             <AnyOf>
                 <AllOf>
-                     <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
-                        <AttributeValue
-                                DataType="http://www.w3.org/2001/XMLSchema#string">bar</AttributeValue>
-                        <AttributeDesignator MustBePresent="false"
-                                             Category="urn:oasis:names:tc:xacml:3.0:attribute-category:action"
-                                             AttributeId="urn:oasis:names:tc:xacml:1.0:action:action-id"
-                                             DataType="http://www.w3.org/2001/XMLSchema#string"/>
+                    <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-regexp-match">
+                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">^verification::application$</AttributeValue>
+                        <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:resource" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"></AttributeDesignator>
                     </Match>
                 </AllOf>
             </AnyOf>
         </Target>
         <Condition>
-            <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:any-of">
-                <Function FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-equal"/>
-                <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">Base</AttributeValue>
-                <AttributeDesignator
-                        Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject"
-                        AttributeId="ru:belkacar:rent:fare:name"
-                        DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false"/>
+            <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:and">
+                <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-at-least-one-member-of">
+                    <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-bag">
+                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">GET</AttributeValue>
+                    </Apply>
+                    <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:action:action-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:action" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"></AttributeDesignator>
+                </Apply>
+                <Apply FunctionId="urn:oasis:names:tc:xacml:1.0:function:any-of">
+                    <Function FunctionId="urn:oasis:names:tc:xacml:1.0:function:string-equal"></Function>
+                    <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">worker</AttributeValue>
+                    <AttributeDesignator AttributeId="ru:belkacar:verification:working-shift:role" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"></AttributeDesignator>
+                </Apply>
             </Apply>
         </Condition>
     </Rule>
-    <Rule RuleId="rule2" Effect="Deny"/>
 </Policy>
-
